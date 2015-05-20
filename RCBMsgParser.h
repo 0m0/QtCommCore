@@ -1,0 +1,59 @@
+#ifndef RCBMSGPARSER_H
+#define RCBMSGPARSER_H
+
+#include <QObject>
+#include <QMap>
+
+class CommServer;
+
+struct DataTypeParse {
+    DataTypeParse(int t, const QString &s, const QString &p) :
+        type(t), str(s), pat(p) {}
+
+    int type;
+    QString str;
+    QString pat;
+};
+
+struct DeviceSpec {
+    QString domain;
+    QString address;
+};
+
+enum {
+    T_BOOL, T_BVSTRING, T_BSTRING, T_BYTE, T_SHORT, T_LONG,
+    T_INT64, T_UBYTE, T_USHORT, T_ULONG, T_UINT64, T_FLOAT,
+    T_DOUBLE, T_OVSTRING, T_OSTRING, T_VSTRING, T_FSTRING,
+    T_GTIME, T_BTIME, T_BCD, T_UTCTIME, T_UTF8VSTRING,
+    T_UTF8STRING
+};
+
+typedef QMap<QString, QString> DataAttribute;
+typedef QMap<DeviceSpec, QMap<QString, DataAttribute> > DataTable;
+
+class RCBMsgParser : public QObject
+{
+    Q_OBJECT
+public:
+    enum ParsingMode { DefaultMode, NewMode };
+
+    explicit RCBMsgParser(CommServer *parent = 0);
+    virtual ~RCBMsgParser();
+
+    bool parse(const QString &, ParsingMode = DefaultMode);
+    const DataAttribute &rcb(const QString &domain, const QString &address);
+
+    static QStringList patterns;
+    static QList<DataTypeParse> dataTypes;
+
+signals:
+
+public slots:
+
+private:
+
+    void addAddress(const QString &, const QString &);
+    DataTable my_rcbTable;
+};
+
+#endif // RCBMSGPARSER_H
