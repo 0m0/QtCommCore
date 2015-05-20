@@ -9,7 +9,7 @@ CommServer::CommServer(const QString &fileName, QObject *parent) :
 {
     my_msgParser = new RCBMsgParser(this);
 
-    QFile demo("C:\\Users\\RM-PC\\Documents\\msg2.txt");
+    QFile demo("C:\\Users\\RM-PC\\Documents\\msg.txt");
     demo.open(QIODevice::ReadOnly | QIODevice::Text);
 
     QString all = demo.readAll();

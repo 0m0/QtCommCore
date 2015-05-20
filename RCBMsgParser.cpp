@@ -6,45 +6,42 @@
 #include "RCBMsgParser.h"
 
 QStringList RCBMsgParser::patterns;
-QList<DataTypeParse> RCBMsgParser::dataTypes;
+QHash<QString, QString> RCBMsgParser::mapTypePattern;
 
 RCBMsgParser::RCBMsgParser(CommServer *parent) :
     QObject(parent)
 {
     if (parent) setParent(parent);
 
+    RCBMsgParser::mapTypePattern.insert("Bool", "(\\d)");
+    RCBMsgParser::mapTypePattern.insert("Bcd", "\\n([^(\\n)]*)");
+    RCBMsgParser::mapTypePattern.insert("Bstring", "\\n([^(\\n)]*)");
+    RCBMsgParser::mapTypePattern.insert("Btime", "\\n([^(\\n)]*)");
+    RCBMsgParser::mapTypePattern.insert("BVstring", "\\n([^(\\n)]*)");
+    RCBMsgParser::mapTypePattern.insert("Byte", "(\\d+)");
+    RCBMsgParser::mapTypePattern.insert("Double", "([1-9][\\d])+(\\.\\d+)?");
+    RCBMsgParser::mapTypePattern.insert("Float", "([1-9][\\d])+(\\.\\d+)?");
+    RCBMsgParser::mapTypePattern.insert("Fstring", "\\n([^(\\n)]*)");
+    RCBMsgParser::mapTypePattern.insert("Gtime", "\\n([^(\\n)]*)");
+    RCBMsgParser::mapTypePattern.insert("Int64", "\\n([^(\\n)]*)");
+    RCBMsgParser::mapTypePattern.insert("Long", "\\n([^(\\n)]*)");
+    RCBMsgParser::mapTypePattern.insert("Qstring", "\\n([^(\\n)]*)");
+    RCBMsgParser::mapTypePattern.insert("OVstring", "\\n([^(\\n)]*)");
+    RCBMsgParser::mapTypePattern.insert("Short", "\\n([^(\\n)]*)");
+    RCBMsgParser::mapTypePattern.insert("UByte", "\\n([^(\\n)]*)");
+    RCBMsgParser::mapTypePattern.insert("UInt64", "\\n([^(\\n)]*)");
+    RCBMsgParser::mapTypePattern.insert("ULong", "\\n([^(\\n)]*)");
+    RCBMsgParser::mapTypePattern.insert("UShort", "\\n([^(\\n)]*)");
+    RCBMsgParser::mapTypePattern.insert("Utctime", "UTC TIME seconds=([1-9][\\d]*), fraction=([1-9][\\d]*), qflags=([1-9][\\d]*)");
+    RCBMsgParser::mapTypePattern.insert("UTF8string", "\\n([^(\\n)]*)");
+    RCBMsgParser::mapTypePattern.insert("UTF8Vstring", "\\n([^(\\n)]*)");
+    RCBMsgParser::mapTypePattern.insert("Vstring", "\\n([^(\\n)]*)");
+
     RCBMsgParser::patterns
         << "<(\\w+)><(\\d+)><([^>]*)>"
         << "\\[([^\\]]*)\\]"
         << "\\{([^\\}]*)\\};\\{([^\\}]*)\\};([^;]*);(.*)"
-        << "\\((\\w+)\\)(\\w+)"
-        << "\\n([^(\\n)]*)"
-        << "UTC TIME seconds=(\\d+), fraction=(\\d+), qflags=(\\d+)";
-
-    RCBMsgParser::dataTypes
-        << *new DataTypeParse(T_BOOL, "Bool", "(\\d)")
-        << *new DataTypeParse(T_BCD, "Bcd", "\\n([^(\\n)]*)")
-        << *new DataTypeParse(T_BSTRING, "Bstring", "\\n([^(\\n)]*)")
-        << *new DataTypeParse(T_BTIME, "Btime", "\\n([^(\\n)]*)")
-        << *new DataTypeParse(T_BVSTRING, "BVstring", "\\n([^(\\n)]*)")
-        << *new DataTypeParse(T_BYTE, "Byte", "(\\d+)")
-        << *new DataTypeParse(T_DOUBLE, "Double", "((?:\\d+)([.\\d]*)?)")
-        << *new DataTypeParse(T_FLOAT, "Float", "((?:\\d+)([.\\d]*)?)")
-        << *new DataTypeParse(T_FSTRING, "Fstring", "\\n([^(\\n)]*)")
-        << *new DataTypeParse(T_GTIME, "Gtime", "\\n([^(\\n)]*)")
-        << *new DataTypeParse(T_INT64, "Int64", "\\n([^(\\n)]*)")
-        << *new DataTypeParse(T_LONG, "Long", "\\n([^(\\n)]*)")
-        << *new DataTypeParse(T_OSTRING, "Qstring", "\\n([^(\\n)]*)")
-        << *new DataTypeParse(T_OVSTRING, "OVstring", "\\n([^(\\n)]*)")
-        << *new DataTypeParse(T_SHORT, "Short", "\\n([^(\\n)]*)")
-        << *new DataTypeParse(T_UBYTE, "UByte", "\\n([^(\\n)]*)")
-        << *new DataTypeParse(T_UINT64, "UInt64", "\\n([^(\\n)]*)")
-        << *new DataTypeParse(T_ULONG, "ULong", "\\n([^(\\n)]*)")
-        << *new DataTypeParse(T_USHORT, "UShort", "\\n([^(\\n)]*)")
-        << *new DataTypeParse(T_UTCTIME, "Utctime", "UTC TIME seconds=(\\d+), fraction=(\\d+), qflags=(\\d+)")
-        << *new DataTypeParse(T_UTF8STRING, "UTF8string", "\\n([^(\\n)]*)")
-        << *new DataTypeParse(T_UTF8VSTRING, "UTF8Vstring", "\\n([^(\\n)]*)")
-        << *new DataTypeParse(T_VSTRING, "Vstring", "\\n([^(\\n)]*)");
+        << "\\((\\w+)\\)(\\w+)";
 }
 
 bool RCBMsgParser::parse(const QString &msg, ParsingMode parseMode)
@@ -72,33 +69,20 @@ bool RCBMsgParser::parse(const QString &msg, ParsingMode parseMode)
         regex.setPattern(patterns[2]);
 
         m2 = regex.match(m1.captured(1));
+        QRegularExpressionMatchIterator m4it = regex.globalMatch(m2.captured(2));
 
         regex.setPattern(patterns[3]);
         QRegularExpressionMatchIterator m3it = regex.globalMatch(m2.captured(1));
 
-        regex.setPattern(patterns[4]);
-        QRegularExpressionMatchIterator m4it = regex.globalMatch(m2.captured(2));
-
-        qDebug() << "Device:" << m2.captured(3) << "Address:" << m2.captured(4);
         while (m3it.hasNext()
                && !(m3 = m3it.next()).captured(1).isNull()
                && !m3.captured(1).isEmpty()) {
 
-            if (m3.captured(1) == "t") {
-                regex.setPattern(patterns[5]);
-                QRegularExpressionMatch m4 = regex.match(m4it.next().captured(1));
+            regex.setPattern(RCBMsgParser::mapTypePattern.value(m2.captured(1)));
+            QRegularExpressionMatch m4 = regex.match(m4it.next().captured(1));
 
-                if (!m4.hasMatch()) return false;
-
-                qDebug() << "\t" << m3.captured(1) << "=>"
-                         << "seconds =" << m4.captured(1)
-                         << "fraction =" << m4.captured(2)
-                         << "qflags =" << m4.captured(3);
-            }
-            //else m4it.next();
-            else qDebug() << "\t" << m3.captured(1) << "=>" << m4it.next().captured(1);
+            qDebug() << m3.captured(1) << m4.capturedTexts() << "\n......................\n";
         }
-        qDebug() << "\n..........................................\n";
     }
 
     return true;

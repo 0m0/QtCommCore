@@ -3,30 +3,22 @@
 
 #include <QObject>
 #include <QMap>
+#include <QMap>
 
 class CommServer;
-
-struct DataTypeParse {
-    DataTypeParse(int t, const QString &s, const QString &p) :
-        type(t), str(s), pat(p) {}
-
-    int type;
-    QString str;
-    QString pat;
-};
 
 struct DeviceSpec {
     QString domain;
     QString address;
 };
 
-enum {
-    T_BOOL, T_BVSTRING, T_BSTRING, T_BYTE, T_SHORT, T_LONG,
-    T_INT64, T_UBYTE, T_USHORT, T_ULONG, T_UINT64, T_FLOAT,
-    T_DOUBLE, T_OVSTRING, T_OSTRING, T_VSTRING, T_FSTRING,
-    T_GTIME, T_BTIME, T_BCD, T_UTCTIME, T_UTF8VSTRING,
-    T_UTF8STRING
-};
+//enum {
+//    T_BOOL, T_BVSTRING, T_BSTRING, T_BYTE, T_SHORT, T_LONG,
+//    T_INT64, T_UBYTE, T_USHORT, T_ULONG, T_UINT64, T_FLOAT,
+//    T_DOUBLE, T_OVSTRING, T_OSTRING, T_VSTRING, T_FSTRING,
+//    T_GTIME, T_BTIME, T_BCD, T_UTCTIME, T_UTF8VSTRING,
+//    T_UTF8STRING
+//};
 
 typedef QMap<QString, QString> DataAttribute;
 typedef QMap<DeviceSpec, QMap<QString, DataAttribute> > DataTable;
@@ -44,7 +36,7 @@ public:
     const DataAttribute &rcb(const QString &domain, const QString &address);
 
     static QStringList patterns;
-    static QList<DataTypeParse> dataTypes;
+    static QHash<QString, QString> mapTypePattern;
 
 signals:
 
@@ -52,7 +44,7 @@ public slots:
 
 private:
 
-    void addAddress(const QString &, const QString &);
+    void addAddress(const QString, const QString);
     DataTable my_rcbTable;
 };
 
