@@ -17,7 +17,7 @@ CommServer::CommServer(const QString &fileName, QObject *parent) :
     QTime t;
     t.start();
     //for (int i = 0; i < 1000; i++) {
-        my_msgParser->parse(all, RCBMsgParser::DefaultMode);
+    qDebug() << my_msgParser->parse(all, RCBMsgParser::DefaultMode);
     //}
     qDebug() << t.elapsed();
     //qDebug() << "Parsing msg: " << my_msgParser->parse(all, RCBMsgParser::DefaultMode);;

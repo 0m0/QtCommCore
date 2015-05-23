@@ -6,42 +6,50 @@
 #include "RCBMsgParser.h"
 
 QStringList RCBMsgParser::patterns;
-QHash<QString, QString> RCBMsgParser::mapTypePattern;
 
 RCBMsgParser::RCBMsgParser(CommServer *parent) :
     QObject(parent)
 {
     if (parent) setParent(parent);
 
-    RCBMsgParser::mapTypePattern.insert("Bool", "(\\d)");
-    RCBMsgParser::mapTypePattern.insert("Bcd", "\\n([^(\\n)]*)");
-    RCBMsgParser::mapTypePattern.insert("Bstring", "\\n([^(\\n)]*)");
-    RCBMsgParser::mapTypePattern.insert("Btime", "\\n([^(\\n)]*)");
-    RCBMsgParser::mapTypePattern.insert("BVstring", "\\n([^(\\n)]*)");
-    RCBMsgParser::mapTypePattern.insert("Byte", "(\\d+)");
-    RCBMsgParser::mapTypePattern.insert("Double", "([1-9][\\d])+(\\.\\d+)?");
-    RCBMsgParser::mapTypePattern.insert("Float", "([1-9][\\d])+(\\.\\d+)?");
-    RCBMsgParser::mapTypePattern.insert("Fstring", "\\n([^(\\n)]*)");
-    RCBMsgParser::mapTypePattern.insert("Gtime", "\\n([^(\\n)]*)");
-    RCBMsgParser::mapTypePattern.insert("Int64", "\\n([^(\\n)]*)");
-    RCBMsgParser::mapTypePattern.insert("Long", "\\n([^(\\n)]*)");
-    RCBMsgParser::mapTypePattern.insert("Qstring", "\\n([^(\\n)]*)");
-    RCBMsgParser::mapTypePattern.insert("OVstring", "\\n([^(\\n)]*)");
-    RCBMsgParser::mapTypePattern.insert("Short", "\\n([^(\\n)]*)");
-    RCBMsgParser::mapTypePattern.insert("UByte", "\\n([^(\\n)]*)");
-    RCBMsgParser::mapTypePattern.insert("UInt64", "\\n([^(\\n)]*)");
-    RCBMsgParser::mapTypePattern.insert("ULong", "\\n([^(\\n)]*)");
-    RCBMsgParser::mapTypePattern.insert("UShort", "\\n([^(\\n)]*)");
-    RCBMsgParser::mapTypePattern.insert("Utctime", "UTC TIME seconds=([1-9][\\d]*), fraction=([1-9][\\d]*), qflags=([1-9][\\d]*)");
-    RCBMsgParser::mapTypePattern.insert("UTF8string", "\\n([^(\\n)]*)");
-    RCBMsgParser::mapTypePattern.insert("UTF8Vstring", "\\n([^(\\n)]*)");
-    RCBMsgParser::mapTypePattern.insert("Vstring", "\\n([^(\\n)]*)");
-
     RCBMsgParser::patterns
         << "<(\\w+)><(\\d+)><([^>]*)>"
         << "\\[([^\\]]*)\\]"
         << "\\{([^\\}]*)\\};\\{([^\\}]*)\\};([^;]*);(.*)"
-        << "\\((\\w+)\\)(\\w+)";
+        << "\\((\\w+)\\)(\\w+)"
+        << "\\n([^(\\n)]*)";
+
+    my_map = new QHash<QString, QString>();
+
+    *my_map = {
+        {"Bool", "(\\d)"},
+        {"Bcd", "([^(\\n)]*)"}
+        {"Bool", "(\\d)"},
+    	{"Bcd", "([^(\\n)]*)"},
+    	{"Bstring", "([^(\\n)]*)"},
+    	{"Btime", "([^(\\n)]*)"},
+    	{"BVstring13", "([01]{13})"},
+    	{"BVstring2", "([01]{2})"},
+    	{"BVstring1", "([01])"},
+    	{"Byte", "(\\d+)"},
+    	{"Double", "((?:[1-9]\\d*)+(?:\\.\\d+))"},
+    	{"Float", "((?:[1-9]\\d*)+(?:\\.\\d+))"},
+    	{"Fstring", "([^(\\n)]*)"},
+    	{"Gtime", "([^(\\n)]*)"},
+    	{"Int64", "([^(\\n)]*)"},
+    	{"Long", "([^(\\n)]*)"},
+    	{"Qstring", "([^(\\n)]*)"},
+    	{"OVstring", "([^(\\n)]*)"},
+    	{"Short", "([^(\\n)]*)"},
+    	{"UByte", "([^(\\n)]*)"},
+    	{"UInt64", "([^(\\n)]*)"},
+    	{"ULong", "([^(\\n)]*)"},
+    	{"UShort", "([^(\\n)]*)"},
+    	{"Utctime", "UTC TIME seconds=(?<seconds>[1-9]\\d*), fraction=(?<fraction>[1-9]\\d*), qflags=(?<qflags>[1-9]\\d*)"},
+    	{"UTF8string", "([^(\\n)]*)"},
+    	{"UTF8Vstring", "([^(\\n)]*)"},
+    	{"Vstring", "([^(\\n)]*)"}
+    };
 }
 
 bool RCBMsgParser::parse(const QString &msg, ParsingMode parseMode)
@@ -58,30 +66,48 @@ bool RCBMsgParser::parse(const QString &msg, ParsingMode parseMode)
         return false;
 
     regex.setPattern(patterns[1]);
+    QRegularExpressionMatchIterator mit1 = regex.globalMatch(match.captured(3));
 
-    QString lstDevices = match.captured(3);
-    QRegularExpressionMatchIterator it = regex.globalMatch(lstDevices);
-
-    while (it.hasNext()) {
-
-        QRegularExpressionMatch m1 = it.next(), m2, m3;
-
+    while (mit1.hasNext()) {
         regex.setPattern(patterns[2]);
 
-        m2 = regex.match(m1.captured(1));
-        QRegularExpressionMatchIterator m4it = regex.globalMatch(m2.captured(2));
+        QString str = mit1.next().captured(1);
+        QRegularExpressionMatch m2 = regex.match(str);
+
+        QString variables = m2.captured(1);
+        QString values = m2.captured(2);
+        QString domain = m2.captured(3);
+        QString address = m2.captured(4);
 
         regex.setPattern(patterns[3]);
-        QRegularExpressionMatchIterator m3it = regex.globalMatch(m2.captured(1));
+        QRegularExpressionMatchIterator mit2 = regex.globalMatch(variables);
 
-        while (m3it.hasNext()
-               && !(m3 = m3it.next()).captured(1).isNull()
-               && !m3.captured(1).isEmpty()) {
+        regex.setPattern(patterns[4]);
+        QRegularExpressionMatchIterator mit3 = regex.globalMatch(values);
 
-            regex.setPattern(RCBMsgParser::mapTypePattern.value(m2.captured(1)));
-            QRegularExpressionMatch m4 = regex.match(m4it.next().captured(1));
+        while (mit2.hasNext()) {
 
-            qDebug() << m3.captured(1) << m4.capturedTexts() << "\n......................\n";
+            QRegularExpressionMatch mVar, mVal;
+            QString attrName, attrType, attrValue;
+
+            mVar = mit2.next();
+            mVal = mit3.next();
+
+            attrName = mVar.captured(1);
+            attrType = mVar.captured(2);
+            attrValue = mVal.captured(1);
+
+            regex.setPattern(my_map->value(attrType));
+
+            qDebug() << regex.match(attrValue).capturedTexts();
+
+
+            //if (!regex.match(attrValue).hasMatch())
+            //    qDebug() << "Error on parsing value";
+
+            //QRegularExpressionMatch m3 = mit2.next();
+            //qDebug() << "[(" << attrName << ")" << attrType << "=" << attrValue << "]";
+            //qDebug() << "[" << m3.captured(1) << "]";
         }
     }
 

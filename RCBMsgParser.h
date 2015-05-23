@@ -36,7 +36,6 @@ public:
     const DataAttribute &rcb(const QString &domain, const QString &address);
 
     static QStringList patterns;
-    static QHash<QString, QString> mapTypePattern;
 
 signals:
 
@@ -44,6 +43,7 @@ public slots:
 
 private:
 
+    QHash<QString, QString> *my_map;
     void addAddress(const QString, const QString);
     DataTable my_rcbTable;
 };
