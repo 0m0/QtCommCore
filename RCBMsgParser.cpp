@@ -4,6 +4,8 @@
 #include <QDebug>
 #include "CommServer.h"
 #include "RCBMsgParser.h"
+#include "utc2gmt.h"
+#include "time.h"
 
 QStringList RCBMsgParser::patterns;
 
@@ -17,15 +19,14 @@ RCBMsgParser::RCBMsgParser(CommServer *parent) :
         << "\\[([^\\]]*)\\]"
         << "\\{([^\\}]*)\\};\\{([^\\}]*)\\};([^;]*);(.*)"
         << "\\((\\w+)\\)(\\w+)"
-        << "\\n([^(\\n)]*)";
+        << "\\n([^(\\n)]*)"
+        << "(?:(\\((?:\w+)\\)\\{(?:(?:\\((?:\\w+)\\)(?:\\w+)),?)+\\})|(?:\\((\w+)\\gi)(\w+)))";
 
     my_map = new QHash<QString, QString>();
 
     *my_map = {
         {"Bool", "(\\d)"},
-        {"Bcd", "([^(\\n)]*)"}
-        {"Bool", "(\\d)"},
-    	{"Bcd", "([^(\\n)]*)"},
+        {"Bcd", "([^(\\n)]*)"},
     	{"Bstring", "([^(\\n)]*)"},
     	{"Btime", "([^(\\n)]*)"},
     	{"BVstring13", "([01]{13})"},
@@ -56,6 +57,7 @@ bool RCBMsgParser::parse(const QString &msg, ParsingMode parseMode)
 {
     QRegularExpression regex;
     QRegularExpressionMatch match;
+    static char timeBuffer[200];
 
     regex.setPatternOptions(QRegularExpression::DotMatchesEverythingOption);
 
@@ -98,16 +100,15 @@ bool RCBMsgParser::parse(const QString &msg, ParsingMode parseMode)
             attrValue = mVal.captured(1);
 
             regex.setPattern(my_map->value(attrType));
+            QRegularExpressionMatch m3 = regex.match(attrValue);
 
-            qDebug() << regex.match(attrValue).capturedTexts();
+            if (attrType == "Utctime") {
+                qDebug() << m3.captured(1).toLong() << m3.captured(2).toLong() << m3.captured(3).toLong();
+                time_t t = m3.captured(1).toLong();
+                ;
 
-
-            //if (!regex.match(attrValue).hasMatch())
-            //    qDebug() << "Error on parsing value";
-
-            //QRegularExpressionMatch m3 = mit2.next();
-            //qDebug() << "[(" << attrName << ")" << attrType << "=" << attrValue << "]";
-            //qDebug() << "[" << m3.captured(1) << "]";
+                //qDebug() << utctogmt(timeBuffer, m3.captured(1).toLong(), m3.captured(2).toLong(), m3.captured(3).toLong());
+            }
         }
     }
 

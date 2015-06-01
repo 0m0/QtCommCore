@@ -19,8 +19,14 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     CommServer.cpp \
-    RCBMsgParser.cpp
+    RCBMsgParser.cpp \
+    ServiceMgr.cpp \
+    ClientMgr.cpp \
+    IMessageParser.cpp
 
 HEADERS += \
     CommServer.h \
-    RCBMsgParser.h
+    RCBMsgParser.h \
+    ServiceMgr.h \
+    ClientMgr.h \
+    IMessageParser.h

@@ -1,7 +1,7 @@
 #ifndef BUFFSERVER_H
 #define BUFFSERVER_H
 
-#include <QtNetwork/QTcpServer>
+#include <QtNetwork/QTcpSocket>
 #include <QHash>
 #include <QList>
 #include "RCBMsgParser.h"
@@ -10,20 +10,7 @@
 #define MAX_NUM_RECORDS 1000
 #define MAX_NUM_HEADERS 100
 
-enum _DataTypes {
-    E_BIT, E_BOOLEAN, E_TINYINT,
-    E_INT, E_BIGINT, E_FLOAT,
-    E_STRING, E_DATETIME
-};
-
-typedef struct {
-    char *label;
-    int index;
-    int dataType;
-    int isMutable;
-} HeaderItem;
-
-class CommServer : public QTcpServer
+class CommServer : public QTcpSocket
 {
     Q_OBJECT
 public:

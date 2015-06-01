@@ -5,11 +5,11 @@
 #include <QTime>
 
 CommServer::CommServer(const QString &fileName, QObject *parent) :
-    QTcpServer(parent)
+    QTcpSocket(parent)
 {
     my_msgParser = new RCBMsgParser(this);
 
-    QFile demo("C:\\Users\\RM-PC\\Documents\\msg.txt");
+    QFile demo("C:\\Users\\RM-PC\\Documents\\msg2.txt");
     demo.open(QIODevice::ReadOnly | QIODevice::Text);
 
     QString all = demo.readAll();
